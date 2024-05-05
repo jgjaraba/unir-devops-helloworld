@@ -5,11 +5,6 @@ pipeline {
         }
     }
     stages {
-        stage('Get Code') {
-            steps {
-                git 'https://github.com/jgjaraba/unir-devops-helloworld.git'
-            }
-        }
         stage('Testing') {
             parallel {
                 stage('Unit Test') {
