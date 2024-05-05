@@ -1,0 +1,63 @@
+pipeline {
+    agent none
+    stages {
+        stage('Testing') {
+            parallel {
+                stage('Unit Test') {
+                    agent {
+                        node {
+                            label 'agent1'
+                        }
+                    }
+                    steps {
+                        sh '''
+                            whoami
+                            hostname
+                            export PYTHONPATH=.
+                            pytest --junitxml=result-unit.xml test/unit
+                        '''
+                        stash includes: 'result-unit.xml', name: 'unit-test-results' // Stash results for later use.
+                    }
+                }
+                stage('Rest Test') {
+                    agent {
+                        node {
+                            label 'agent2'
+                        }
+                    }
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            sh '''
+                                whoami
+                                hostname
+                                java -jar /var/wiremock/wiremock-standalone-3.5.4.jar --port 9090 --root-dir /var/wiremock &
+                                export FLASK_APP=app/api.py
+                                flask run &
+                                sleep 5
+                                export PYTHONPATH=.
+                                pytest --junitxml=result-rest.xml test/rest
+                            '''
+                        }
+                        stash includes: 'result-rest.xml', name: 'rest-test-results' // Stash results for later use.
+                    }
+                }
+            }
+        }
+        stage('Publish Results') {
+            agent {
+                node {
+                    label 'python'
+                }
+             }
+            steps {
+                sh '''
+                    whoami
+                    hostname
+                '''
+                unstash 'unit-test-results' // Retrieve stashed unit test results
+                unstash 'rest-test-results' // Retrieve stashed rest test results
+                junit 'result*.xml'
+            }
+        }
+    }
+}
