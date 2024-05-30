@@ -60,6 +60,7 @@ pipeline {
                         export PYTHONPATH=.
                         pytest --junitxml=result-rest.xml test/rest
                     '''
+                    junit 'result-rest.xml'
                 }
             }
         }
