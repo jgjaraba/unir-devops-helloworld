@@ -8,7 +8,7 @@ pipeline {
     environment {
         PATH = "/opt/venv/bin:$PATH"
     }
-
+    stages{
         stage('Unit') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
