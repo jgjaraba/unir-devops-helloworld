@@ -17,7 +17,7 @@ services:
     networks:
       - jenkins-network
     volumes:
-      - wiremock_home:/var/wiremock
+      - bin_home:/var/bin_home
     environment:
       - JENKINS_AGENT_SSH_PUBKEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/2WQadIDUPyfgcuDrVpw5yyyfjplQh/PDd0MVn/StSPzsr2uHHsjuObqmTDPRal7D/tfvBY9Lj7RlGc7BoaEZoZwncbrdJ8aehOza0MJqSQkvj6R25uNebggyPAsFShHJw9BNlUZe99M8lR7FQpXIqvJpcBIddnSZ8AgH6BYvYDLDq09EfLXDixOn7Yij8+dfp9t/qGmNcOAqyRoj1wroEn6giuJBz1WclXJHMR5dVdeE1L739kru2wK1IxT1p11G9Urmg0sTAPUab0NPKlHKWQQZxNbvbzjZliW8mqH1oL2M8pBaf4zBBP9LvVa0RPCTBzrUiJzgaRdJdynILoo+lM/k0c89ECNyiHlRk5/fU6gYy/CNj51ZmT4wg49LBXX5ehIeExcMMjzjcOmD/Y92zlqgWmPu3XPwpSfvVfnlGeRPvqKbtmZhw3o2DGqpllxxuGQ1hYoCVnewSKc139s+JvUAX3EstRDqyeMSAEGyJOYHQ9gMD1ytYp5quHInNB0= joseg@JoseGJ-Desktop
 
@@ -27,9 +27,9 @@ networks:
 
 volumes:
   jenkins_home:
-  wiremock_home:
+  bin_home:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device:  '${PWD}/test/wiremock'
+      device:  '${PWD}/bin'
