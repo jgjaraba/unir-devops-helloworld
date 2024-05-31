@@ -47,7 +47,7 @@ pipeline {
                 stage("Static"){
                     agent {
                         node {
-                            label 'agent3'
+                            label 'python'
                         }
                     }
                     steps{
@@ -60,7 +60,7 @@ pipeline {
                 stage("Security"){
                     agent {
                         node {
-                            label 'agent4'
+                            label 'python'
                         }
                     }
                     steps{
@@ -75,7 +75,7 @@ pipeline {
         stage("Coverage"){
             agent {
                 node {
-                    label 'python'
+                    label 'agent1'
                 }
             }
             steps{

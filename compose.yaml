@@ -13,7 +13,7 @@ services:
     image: jenkins-python-agent
     deploy:
       mode: replicated
-      replicas: 4
+      replicas: 2
     networks:
       - jenkins-network
     volumes:
