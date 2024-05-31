@@ -64,7 +64,6 @@ pipeline {
                         }
                     }
                     steps{
-                        unstash 'code'
                         sh '''
                             bandit --exit-zero -r  . -f custom -o bandit.out --severity-level medium --msg-template="{relpath}:{line}: [{test_id}] {msg}"
                         '''
