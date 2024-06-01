@@ -19,8 +19,10 @@ pipeline {
                 }
             }
             steps {
-                whoami
-                hostname
+                sh '''
+                    whoami
+                    hostname
+                '''
                 checkout scm
                 stash name: 'source', includes: '**/*'
             }
@@ -34,10 +36,10 @@ pipeline {
                         }
                     }
                     steps {
-                        whoami
-                        hostname
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                             sh '''
+                                whoami
+                                hostname
                                 coverage run --branch --source=app --omit=app/__init__.py,app/api.py -m pytest --junitxml=result-unit.xml test/unit
                             '''
                             junit 'result-unit.xml'
@@ -52,8 +54,10 @@ pipeline {
                         }
                     }
                     steps {
-                        whoami
-                        hostname
+                        sh '''
+                            whoami
+                            hostname
+                        '''
                         unstash 'source'
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             script{
@@ -76,10 +80,10 @@ pipeline {
                         }
                     }
                     steps {
-                        whoami
-                        hostname
                         unstash 'source'
                         sh '''
+                            whoami
+                            hostname
                             flake8 --exit-zero --format=pylint app >flake8.out
                         '''
                         recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
@@ -96,9 +100,9 @@ pipeline {
                         }
                     }
                     steps {
-                        whoami
-                        hostname
                         sh '''
+                            whoami
+                            hostname
                             bandit --exit-zero -r  . -f custom -o bandit.out --severity-level medium --msg-template="{relpath}:{line}: [{test_id}] {msg}"
                         '''
                         recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')],
@@ -117,8 +121,10 @@ pipeline {
                 }
             }
             steps {
-                whoami
-                hostname
+                sh '''
+                    whoami
+                    hostname
+                '''
                 sh 'coverage xml'
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     cobertura autoUpdateHealth: false,
@@ -139,8 +145,10 @@ pipeline {
                 }
             }
             steps {
-                whoami
-                hostname
+                sh '''
+                    whoami
+                    hostname
+                '''
                 script {
                     if (!isServiceUp(5000)) {
                         startFlaskService()
