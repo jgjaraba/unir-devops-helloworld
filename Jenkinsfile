@@ -7,13 +7,15 @@ pipeline {
 
     environment {
         PATH = "/opt/venv/bin:$PATH"
+        PYTHONPATH = "."
+        FLASK_APP= "app/api.py"
     }
+
     stages{
         stage('Unit') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                     sh '''
-                        export PYTHONPATH=.
                         coverage run --branch --source=app --omit=app/__init__.py,app/api.py -m pytest --junitxml=result-unit.xml test/unit
                     '''
                     junit 'result-unit.xml'
@@ -26,22 +28,12 @@ pipeline {
                 sh '''
                     coverage xml
                 '''
-                catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                    cobertura autoUpdateHealth: false,
-                    autoUpdateStability: false,
-                    coberturaReportFile: 'coverage.xml',
-                    onlyStable: false,
-                    failUnstable: true,
-                    failUnhealthy: false,
-                    conditionalCoverageTargets: '100,80,90',
-                    lineCoverageTargets: '100,85,95'
-                }
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     cobertura autoUpdateHealth: false,
                     autoUpdateStability: false,
                     coberturaReportFile: 'coverage.xml',
                     onlyStable: false,
-                    failUnstable: false,
+                    failUnstable: true,
                     failUnhealthy: true,
                     conditionalCoverageTargets: '100,80,90',
                     lineCoverageTargets: '100,85,95'
@@ -52,12 +44,13 @@ pipeline {
         stage('Rest') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                    script{
+                        startFlaskService()
+                        startWireMockService()
+                        waitForService(5000)
+                        waitForService(9090)
+                    }
                     sh '''
-                        java -jar /var/bin_home/wiremock-standalone-3.5.4.jar --port 9090 --root-dir test/wiremock &
-                        export FLASK_APP=app/api.py
-                        flask run &
-                        sleep 5
-                        export PYTHONPATH=.
                         pytest --junitxml=result-rest.xml test/rest
                     '''
                     junit 'result-rest.xml'
@@ -86,14 +79,11 @@ pipeline {
         stage("Performance"){
             steps{
                 script {
-                        sh '''
-                            #!/bin/bash
-                            if ! nc -z localhost 5000; then
-                                flask run &
-                                sleep 5
-                            fi
-                        '''
-                        }
+                    if (!isServiceUp(5000)) {
+                        startFlaskService()
+                        waitForService(5000)
+                    }
+                }
                 sh "/var/bin_home/apache-jmeter-5.6.3/bin/jmeter -n -t test/jmeter/flask.jmx -f -l flask.jtl"
                 perfReport sourceDataFiles: "flask.jtl"
             }
@@ -103,6 +93,25 @@ pipeline {
     post {
         always {
             cleanWs()
+        }
+    }
+}
+def startFlaskService() {
+    sh "flask run &"
+}
+def startWireMockService() {
+    sh "java -jar /var/bin_home/wiremock-standalone-3.5.4.jar --port 9090 --root-dir test/wiremock &"
+}
+def isServiceUp(port) {
+        response = sh(script: "nc -z localhost ${port}", returnStatus: true)
+        return response == 0
+}
+def waitForService(port) {
+    timeout(time: 5, unit: 'SECONDS') {
+        waitUntil {
+            script {
+                return isServiceUp(port)
+            }
         }
     }
 }
